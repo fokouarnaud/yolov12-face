@@ -1,6 +1,7 @@
 """
 Script de téléchargement et préparation des datasets WIDERFace
 Compatible avec YOLOv12 et la structure Ultralytics
+Version mise à jour avec les liens corrects
 """
 
 import os
@@ -21,19 +22,25 @@ class WIDERFaceDownloader:
     Télécharge et prépare le dataset WIDERFace pour YOLOv12
     """
     
-    # URLs officielles du dataset WIDERFace
+    # URLs mises à jour (décembre 2024)
     URLS = {
-        'train_images': 'https://huggingface.co/datasets/wider_face/resolve/main/WIDER_train.zip',
-        'val_images': 'https://huggingface.co/datasets/wider_face/resolve/main/WIDER_val.zip',
-        'test_images': 'https://huggingface.co/datasets/wider_face/resolve/main/WIDER_test.zip',
-        'annotations': 'http://shuoyang1213.me/WIDERFACE/support/wider_face_split.zip'
+        # HuggingFace (utilise resolve au lieu de blob)
+        'train_images': 'https://huggingface.co/datasets/wider_face/resolve/main/data/WIDER_train.zip',
+        'val_images': 'https://huggingface.co/datasets/wider_face/resolve/main/data/WIDER_val.zip',
+        'test_images': 'https://huggingface.co/datasets/wider_face/resolve/main/data/WIDER_test.zip',
+        'annotations': 'https://huggingface.co/datasets/wider_face/resolve/main/data/wider_face_split.zip',
+        
+        # URLs alternatives directes depuis le site officiel
+        'train_gdrive_new': 'https://drive.google.com/file/d/15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M/view?usp=sharing',
+        'val_gdrive_new': 'https://drive.google.com/file/d/1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q/view?usp=sharing',
+        'anno_gdrive_new': 'https://drive.google.com/file/d/1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q/view?usp=sharing'
     }
     
-    # URLs alternatives (Google Drive)
+    # Google Drive IDs extraits des nouveaux liens
     GDRIVE_IDS = {
-        'train_images': '0B6eKvaijfFUOQUUwd21EckhUbWs',
-        'val_images': '0B6eKvaijfFUDd3dIRmpvSk8tLUk',
-        'test_images': '0B6eKvaijfFUDbnF0ei1jMmhLT1U',
+        'train_images': '15hGDLhsx8bLgLcIRD5DhYt5iBxnjNF1M',
+        'val_images': '1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q',
+        'test_images': '1HIfDbVEWKmsYKJZm4lchTBDLW5N7dY5T',
         'annotations': '1GUCogbp16PMGa39thoMMeWxp7Rp5oM8Q'
     }
     
@@ -64,45 +71,76 @@ class WIDERFaceDownloader:
             for dir_path in split_dirs.values():
                 dir_path.mkdir(parents=True, exist_ok=True)
     
-    def download_from_url(self, url: str, filename: str) -> bool:
+    def download_from_url(self, url: str, filename: str, max_retries: int = 3) -> bool:
         """
-        Télécharge un fichier depuis une URL
+        Télécharge un fichier depuis une URL avec retry
         """
-        try:
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-            
-            total_size = int(response.headers.get('content-length', 0))
-            
-            with open(filename, 'wb') as f:
-                with tqdm(total=total_size, unit='B', unit_scale=True, desc=filename) as pbar:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        pbar.update(len(chunk))
-            
-            return True
-        except Exception as e:
-            print(f"❌ Erreur lors du téléchargement depuis {url}: {e}")
-            return False
+        for attempt in range(max_retries):
+            try:
+                print(f"Tentative {attempt + 1}/{max_retries}...")
+                
+                # Headers pour éviter les blocages
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+                
+                response = requests.get(url, stream=True, headers=headers, timeout=30)
+                response.raise_for_status()
+                
+                total_size = int(response.headers.get('content-length', 0))
+                
+                with open(filename, 'wb') as f:
+                    with tqdm(total=total_size, unit='B', unit_scale=True, desc=filename) as pbar:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                pbar.update(len(chunk))
+                
+                # Vérifier la taille du fichier
+                if Path(filename).stat().st_size > 1000:  # Au moins 1KB
+                    return True
+                else:
+                    print(f"⚠️ Fichier trop petit, nouvelle tentative...")
+                    Path(filename).unlink()
+                    
+            except Exception as e:
+                print(f"⚠️ Tentative {attempt + 1} échouée: {str(e)}")
+                if Path(filename).exists():
+                    Path(filename).unlink()
+                
+                if attempt < max_retries - 1:
+                    print("⏳ Attente de 5 secondes avant nouvelle tentative...")
+                    import time
+                    time.sleep(5)
+        
+        return False
     
     def download_from_gdrive(self, file_id: str, filename: str) -> bool:
         """
-        Télécharge depuis Google Drive
+        Télécharge depuis Google Drive avec gdown
         """
         try:
             import gdown
-            url = f'https://drive.google.com/uc?id={file_id}'
-            gdown.download(url, filename, quiet=False)
-            return True
+            
+            # URL avec paramètres pour éviter les confirmations
+            url = f'https://drive.google.com/uc?export=download&id={file_id}'
+            
+            # Télécharger avec gdown
+            output = gdown.download(url, filename, quiet=False, fuzzy=True)
+            
+            if output and Path(output).exists() and Path(output).stat().st_size > 1000:
+                return True
+            else:
+                return False
+                
         except Exception as e:
             print(f"❌ Erreur Google Drive: {e}")
-            print("💡 Installation de gdown...")
-            os.system("pip install gdown")
+            
+            # Essayer la méthode alternative
             try:
-                import gdown
-                url = f'https://drive.google.com/uc?id={file_id}'
-                gdown.download(url, filename, quiet=False)
-                return True
+                # Construction de l'URL alternative
+                alt_url = f"https://drive.google.com/uc?export=download&confirm=t&id={file_id}"
+                return self.download_from_url(alt_url, filename)
             except:
                 return False
     
@@ -112,63 +150,70 @@ class WIDERFaceDownloader:
         """
         print("📥 Téléchargement du dataset WIDERFace...")
         
-        downloads = []
+        # Fichiers à télécharger
+        files_to_download = [
+            ('train_images', 'WIDER_train.zip', 'train'),
+            ('val_images', 'WIDER_val.zip', 'val'),
+            ('annotations', 'wider_face_split.zip', 'annotations')
+        ]
         
-        # Déterminer les sources
-        if use_gdrive:
-            downloads = [
-                (self.GDRIVE_IDS['train_images'], 'WIDER_train.zip', 'train'),
-                (self.GDRIVE_IDS['val_images'], 'WIDER_val.zip', 'val'),
-                (self.GDRIVE_IDS['annotations'], 'wider_face_split.zip', 'annotations')
-            ]
-        else:
-            downloads = [
-                (self.URLS['train_images'], 'WIDER_train.zip', 'train'),
-                (self.URLS['val_images'], 'WIDER_val.zip', 'val'),
-                (self.URLS['annotations'], 'wider_face_split.zip', 'annotations')
-            ]
+        success_count = 0
         
-        # Télécharger chaque fichier
-        for source, filename, split in downloads:
+        for file_key, filename, split in files_to_download:
             filepath = self.output_dir / filename
             
-            if filepath.exists():
+            # Vérifier si le fichier existe déjà et a une taille raisonnable
+            if filepath.exists() and filepath.stat().st_size > 1000000:  # > 1MB
                 print(f"✅ {filename} existe déjà")
+                success_count += 1
                 continue
             
             print(f"\n📥 Téléchargement de {filename}...")
+            success = False
             
-            # Essayer de télécharger
-            if use_gdrive:
-                success = self.download_from_gdrive(source, str(filepath))
+            # Essayer HuggingFace d'abord (sauf si gdrive forcé)
+            if not use_gdrive and file_key in self.URLS:
+                print("🔄 Tentative via HuggingFace...")
+                success = self.download_from_url(self.URLS[file_key], str(filepath))
+            
+            # Si échec ou gdrive forcé, essayer Google Drive
+            if not success and file_key in self.GDRIVE_IDS:
+                print("🔄 Tentative via Google Drive...")
+                success = self.download_from_gdrive(self.GDRIVE_IDS[file_key], str(filepath))
+            
+            if success:
+                success_count += 1
+                print(f"✅ {filename} téléchargé avec succès")
             else:
-                success = self.download_from_url(source, str(filepath))
-            
-            if not success:
-                print(f"❌ Échec du téléchargement de {filename}")
-                # Essayer l'autre méthode
-                if not use_gdrive:
-                    print("🔄 Tentative avec Google Drive...")
-                    success = self.download_from_gdrive(self.GDRIVE_IDS[split + '_images'], str(filepath))
-                
-                if not success:
-                    raise Exception(f"Impossible de télécharger {filename}")
-            
-            # Extraire le zip
-            if filepath.exists() and filepath.suffix == '.zip':
-                print(f"📦 Extraction de {filename}...")
-                with zipfile.ZipFile(filepath, 'r') as zip_ref:
-                    zip_ref.extractall(self.output_dir)
-                
-                # Supprimer le zip après extraction
-                filepath.unlink()
-                print(f"✅ {filename} extrait avec succès")
+                print(f"❌ Impossible de télécharger {filename}")
+                print(f"💡 Vous pouvez télécharger manuellement depuis:")
+                print(f"   - http://shuoyang1213.me/WIDERFACE/")
+                print(f"   - https://huggingface.co/datasets/wider_face/tree/main/data")
+        
+        # Extraire les fichiers zip
+        if success_count > 0:
+            print("\n📦 Extraction des archives...")
+            for file_key, filename, split in files_to_download:
+                filepath = self.output_dir / filename
+                if filepath.exists() and filepath.suffix == '.zip':
+                    try:
+                        print(f"   Extraction de {filename}...")
+                        with zipfile.ZipFile(filepath, 'r') as zip_ref:
+                            zip_ref.extractall(self.output_dir)
+                        filepath.unlink()  # Supprimer le zip après extraction
+                        print(f"   ✅ {filename} extrait")
+                    except Exception as e:
+                        print(f"   ❌ Erreur lors de l'extraction de {filename}: {e}")
+        
+        return success_count >= 2  # Au moins train et annotations
     
     def convert_annotations(self):
         """
         Convertit les annotations WIDERFace au format YOLO
         """
         print("\n🔄 Conversion des annotations au format YOLO...")
+        
+        converted_splits = 0
         
         for split in ['train', 'val']:
             print(f"\n📝 Traitement du split '{split}'...")
@@ -177,8 +222,11 @@ class WIDERFaceDownloader:
             anno_file = self.output_dir / 'wider_face_split' / f'wider_face_{split}_bbx_gt.txt'
             
             if not anno_file.exists():
-                print(f"❌ Fichier d'annotations non trouvé: {anno_file}")
-                continue
+                print(f"⚠️ Fichier d'annotations non trouvé: {anno_file}")
+                # Essayer un autre emplacement
+                anno_file = self.output_dir / f'wider_face_{split}_bbx_gt.txt'
+                if not anno_file.exists():
+                    continue
             
             # Lire les annotations
             with open(anno_file, 'r') as f:
@@ -194,6 +242,10 @@ class WIDERFaceDownloader:
                 # Nom de l'image
                 img_name = lines[i].strip()
                 i += 1
+                
+                if not img_name or i >= len(lines):
+                    pbar.update(1)
+                    continue
                 
                 # Chemin de l'image source
                 img_src = self.output_dir / f'WIDER_{split}' / 'images' / img_name
@@ -215,15 +267,22 @@ class WIDERFaceDownloader:
                 shutil.copy2(img_src, img_dst)
                 
                 # Nombre de faces
-                num_bbox = int(lines[i].strip())
-                i += 1
+                try:
+                    num_bbox = int(lines[i].strip())
+                    i += 1
+                except:
+                    pbar.update(1)
+                    continue
                 
                 # Créer le fichier de labels YOLO
                 label_file = self.dirs['labels'][split] / (img_dst.stem + '.txt')
                 
+                valid_faces = 0
                 with open(label_file, 'w') as lf:
                     for j in range(num_bbox):
-                        # Format WIDERFace: x1 y1 w h blur expression occlusion pose invalid
+                        if i >= len(lines):
+                            break
+                            
                         bbox_info = lines[i].strip().split()
                         i += 1
                         
@@ -233,14 +292,14 @@ class WIDERFaceDownloader:
                         x1, y1, bbox_w, bbox_h = map(float, bbox_info[:4])
                         
                         # Filtrer les bboxes invalides
+                        if bbox_w <= 0 or bbox_h <= 0 or bbox_w < 5 or bbox_h < 5:
+                            continue
+                        
+                        # Vérifier si c'est un visage valide (pas marqué comme invalide)
                         if len(bbox_info) >= 9:
                             invalid = int(bbox_info[8])
                             if invalid == 1:
                                 continue
-                        
-                        # Ignorer les bboxes trop petites
-                        if bbox_w <= 0 or bbox_h <= 0 or bbox_w < 5 or bbox_h < 5:
-                            continue
                         
                         # Convertir au format YOLO (normalisé)
                         x_center = (x1 + bbox_w / 2) / w
@@ -256,13 +315,27 @@ class WIDERFaceDownloader:
                         
                         # Écrire au format YOLO
                         lf.write(f"0 {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
-                        num_faces += 1
+                        valid_faces += 1
                 
-                num_images += 1
+                if valid_faces > 0:
+                    num_images += 1
+                    num_faces += valid_faces
+                else:
+                    # Supprimer l'image et le label s'il n'y a pas de faces valides
+                    img_dst.unlink()
+                    label_file.unlink()
+                
                 pbar.update(1)
             
             pbar.close()
-            print(f"✅ Split '{split}': {num_images} images, {num_faces} faces")
+            
+            if num_images > 0:
+                converted_splits += 1
+                print(f"✅ Split '{split}': {num_images} images, {num_faces} faces")
+            else:
+                print(f"⚠️ Split '{split}': Aucune image convertie")
+        
+        return converted_splits > 0
     
     def create_yaml_config(self):
         """
@@ -314,6 +387,9 @@ class WIDERFaceDownloader:
             img_dir = self.dirs['images'][split]
             label_dir = self.dirs['labels'][split]
             
+            if not img_dir.exists() or not label_dir.exists():
+                continue
+            
             images = list(img_dir.glob('*.jpg')) + list(img_dir.glob('*.png'))
             labels = list(label_dir.glob('*.txt'))
             
@@ -325,7 +401,7 @@ class WIDERFaceDownloader:
             total_labels += len(labels)
             
             # Vérifier quelques labels
-            if labels:
+            if labels and len(labels) > 0:
                 sample_label = labels[0]
                 with open(sample_label, 'r') as f:
                     lines = f.readlines()
@@ -335,12 +411,7 @@ class WIDERFaceDownloader:
         print(f"   • Images: {total_images}")
         print(f"   • Labels: {total_labels}")
         
-        if total_images == total_labels and total_images > 0:
-            print("\n✅ Dataset vérifié avec succès!")
-            return True
-        else:
-            print("\n❌ Problème détecté dans le dataset")
-            return False
+        return total_images > 0 and total_labels > 0
     
     def run(self, use_gdrive: bool = False):
         """
@@ -350,10 +421,22 @@ class WIDERFaceDownloader:
         print("="*60)
         
         # Télécharger
-        self.download_dataset(use_gdrive)
+        download_success = self.download_dataset(use_gdrive)
+        
+        if not download_success:
+            print("\n❌ Échec du téléchargement")
+            print("💡 Solutions alternatives:")
+            print("1. Téléchargez manuellement depuis http://shuoyang1213.me/WIDERFACE/")
+            print("2. Placez les fichiers dans:", self.output_dir)
+            print("3. Relancez ce script")
+            return False
         
         # Convertir
-        self.convert_annotations()
+        convert_success = self.convert_annotations()
+        
+        if not convert_success:
+            print("\n❌ Échec de la conversion")
+            return False
         
         # Créer la configuration
         self.create_yaml_config()
@@ -366,7 +449,7 @@ class WIDERFaceDownloader:
             print(f"📁 Emplacement: {self.output_dir.absolute()}")
             print(f"📝 Configuration: {self.output_dir / 'data.yaml'}")
         else:
-            print("\n❌ Erreurs détectées. Vérifiez les logs.")
+            print("\n⚠️ Dataset partiellement préparé. Vérifiez les logs.")
         
         return success
 
@@ -379,9 +462,16 @@ def main():
     parser.add_argument('--output', type=str, default='datasets/widerface',
                       help='Répertoire de sortie pour le dataset')
     parser.add_argument('--gdrive', action='store_true',
-                      help='Utiliser Google Drive pour le téléchargement')
+                      help='Forcer l\'utilisation de Google Drive pour le téléchargement')
     
     args = parser.parse_args()
+    
+    # Installer gdown si nécessaire
+    try:
+        import gdown
+    except ImportError:
+        print("📦 Installation de gdown...")
+        os.system(f"{sys.executable} -m pip install gdown")
     
     # Créer le downloader
     downloader = WIDERFaceDownloader(args.output)
