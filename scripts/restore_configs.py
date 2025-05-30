@@ -77,14 +77,31 @@ def restore_configs():
         if enhanced_import not in content:
             lines = content.split('\n')
             
-            # Trouver la ligne __all__ et insérer avant
+            # Trouver la ligne avec les imports head et insérer après
             for i, line in enumerate(lines):
-                if line.strip().startswith('__all__'):
-                    lines.insert(i, enhanced_import)
+                if 'from .head import' in line:
+                    lines.insert(i + 1, enhanced_import)
                     break
             else:
-                # Si __all__ n'est pas trouvé, ajouter à la fin des imports
-                lines.insert(-1, enhanced_import)
+                # Si pas trouvé, insérer avant __all__
+                for i, line in enumerate(lines):
+                    if line.strip().startswith('__all__'):
+                        lines.insert(i, enhanced_import)
+                        break
+            
+            # Ajouter les modules Enhanced à __all__
+            enhanced_modules = ['"A2Module"', '"RELAN"', '"FlashAttention"', '"CrossScaleAttention"', '"MicroExpressionAttention"']
+            
+            # Trouver la fin de __all__ et ajouter nos modules
+            in_all_block = False
+            for i, line in enumerate(lines):
+                if line.strip().startswith('__all__'):
+                    in_all_block = True
+                elif in_all_block and line.strip() == ')':
+                    # Insérer nos modules avant la parenthèse fermante
+                    for module in enhanced_modules:
+                        lines.insert(i, f'    {module},')
+                    break
             
             # Écrire le nouveau contenu
             with open(init_file, 'w', encoding='utf-8') as f:

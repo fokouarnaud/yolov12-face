@@ -76,6 +76,7 @@ from .conv import (
     SpatialAttention,
 )
 from .head import OBB, Classify, Detect, Pose, RTDETRDecoder, Segment, WorldDetect, v10Detect
+from .enhanced import *
 from .transformer import (
     AIFI,
     MLP,
@@ -161,5 +162,10 @@ __all__ = (
     "PSA",
     "TorchVision",
     "Index",
-    "A2C2f"
+    "A2C2f",
+    "A2Module",
+    "RELAN",
+    "FlashAttention",
+    "CrossScaleAttention",
+    "MicroExpressionAttention"
 )
