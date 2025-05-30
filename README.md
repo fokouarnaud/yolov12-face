@@ -29,27 +29,35 @@ YOLOv12-Face Enhanced is an improved face detection model that extends the stand
 
 ## 🚀 Quick Start
 
-### Option 1: Jupyter Notebook (Recommended)
+### 🎯 Méthode Recommandée (Notebook)
 
 ```bash
-# Clone the repository
+# Clone le dépôt
 git clone https://github.com/yourusername/yolov12-face-enhanced.git
 cd yolov12-face-enhanced
 
-# Open and run the training notebook
+# Ouvrir le notebook principal
 jupyter notebook train_yolov12_enhanced.ipynb
 ```
 
-### Option 2: Python Script
+**Puis exécuter toutes les cellules dans l'ordre :**
+1. 📦 **Installation automatique** des dépendances (`ultralytics`, `gdown`, `opencv-python`)
+2. 🔧 **Restauration automatique** des configurations Enhanced
+3. ✅ **Vérification** que tout fonctionne
+4. 🏋️ **Entraînement** du modèle Enhanced
+5. 📊 **Analyse** des résultats
+6. 🧪 **Test** et export du modèle
+
+### Option 2: Installation Manuelle
 
 ```bash
-# Install dependencies
-pip install ultralytics torch torchvision
+# Installer les dépendances
+pip install ultralytics gdown opencv-python
 
-# Restore configurations
+# Restaurer les configurations
 python scripts/restore_configs.py
 
-# Train the model
+# Entraîner le modèle
 python scripts/train_enhanced.py --epochs 100 --batch-size 16
 ```
 
