@@ -108,7 +108,21 @@ Specialized attention for subtle facial feature detection.
 
 ### Dependencies
 ```bash
-pip install ultralytics torch torchvision matplotlib opencv-python
+# Installation complète des dépendances
+pip install ultralytics torch torchvision matplotlib
+pip install huggingface_hub pillow opencv-python seaborn pandas
+```
+
+### Troubleshooting Installation
+Si vous rencontrez l'erreur `ModuleNotFoundError: No module named 'huggingface_hub'`:
+
+```bash
+# Diagnostic automatique
+python scripts/diagnose.py
+
+# Ou installation manuelle
+pip install huggingface_hub transformers
+pip install --upgrade ultralytics
 ```
 
 ### Dataset Setup
