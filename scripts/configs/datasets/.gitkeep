@@ -1,0 +1,3 @@
+# GitKeep pour scripts/configs/datasets/
+# Ce fichier assure que le dossier est tracké par Git
+# même lorsqu'il ne contient que des fichiers exclus par .gitignore

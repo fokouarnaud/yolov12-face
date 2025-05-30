@@ -139,6 +139,16 @@ data/
 *.tar
 *.tar.gz
 
+# Exception: Garder nos configs de sauvegarde
+!scripts/configs/
+!scripts/configs/**
+!scripts/configs/datasets/
+!scripts/configs/datasets/**
+!scripts/configs/models/
+!scripts/configs/models/**
+!scripts/configs/modules/
+!scripts/configs/modules/**
+
 # WIDERFace specific
 WIDER_train/
 WIDER_val/
