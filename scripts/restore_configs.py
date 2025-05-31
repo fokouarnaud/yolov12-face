@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 🔄 Script de restauration optimisé pour YOLOv12-Face Enhanced
-Version robuste qui gère les problèmes d'import
+Version corrigée pour éviter les erreurs de syntaxe
 """
 
 import os
@@ -199,7 +199,7 @@ __all__ = ['A2Module', 'RELAN', 'FlashAttention', 'CrossScaleAttention', 'MicroE
             f.write(self.create_enhanced_module())
     
     def update_init_file(self):
-        """Met à jour le fichier __init__.py"""
+        """Met à jour le fichier __init__.py de manière plus sûre"""
         print("\n🔧 MISE À JOUR DE __INIT__.PY")
         print("=" * 30)
         
@@ -209,29 +209,73 @@ __all__ = ['A2Module', 'RELAN', 'FlashAttention', 'CrossScaleAttention', 'MicroE
             print("❌ __init__.py non trouvé")
             return False
         
-        with open(init_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        if 'from .enhanced import *' in content:
-            print("✅ Import enhanced déjà présent")
-            return True
-        
-        # Ajouter l'import
-        lines = content.split('\n')
-        
-        # Trouver où insérer (après les autres imports)
-        insert_idx = 0
-        for i, line in enumerate(lines):
-            if line.startswith('from .') and 'import' in line:
-                insert_idx = i + 1
-        
-        lines.insert(insert_idx, 'from .enhanced import *')
-        
-        with open(init_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(lines))
-        
-        print("✅ Import enhanced ajouté")
-        return True
+        try:
+            with open(init_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            if 'from .enhanced import *' in content:
+                print("✅ Import enhanced déjà présent")
+                return True
+            
+            # Méthode plus sûre : ajouter l'import juste avant la définition de __all__
+            lines = content.split('\n')
+            
+            # Trouver la ligne __all__
+            all_line_idx = None
+            for i, line in enumerate(lines):
+                if line.strip().startswith('__all__'):
+                    all_line_idx = i
+                    break
+            
+            if all_line_idx is None:
+                # Si pas de __all__, ajouter à la fin des imports
+                import_line_idx = 0
+                for i, line in enumerate(lines):
+                    if line.strip() and not line.startswith('from') and not line.startswith('import'):
+                        import_line_idx = i - 1
+                        break
+                
+                if import_line_idx > 0:
+                    lines.insert(import_line_idx, 'from .enhanced import *')
+                else:
+                    # Ajouter après le dernier import
+                    for i in range(len(lines)-1, -1, -1):
+                        if lines[i].startswith('from .') or lines[i].startswith('import'):
+                            lines.insert(i + 1, 'from .enhanced import *')
+                            break
+            else:
+                # Ajouter juste avant __all__
+                # Trouver la dernière ligne d'import avant __all__
+                last_import_idx = 0
+                for i in range(all_line_idx - 1, -1, -1):
+                    if lines[i].strip() and (lines[i].startswith('from') or lines[i].startswith('import')):
+                        last_import_idx = i
+                        break
+                
+                # Insérer après le dernier import
+                lines.insert(last_import_idx + 1, 'from .enhanced import *')
+            
+            # Écrire le fichier modifié
+            with open(init_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(lines))
+            
+            print("✅ Import enhanced ajouté")
+            
+            # Vérifier la syntaxe
+            try:
+                compile(open(init_path).read(), init_path, 'exec')
+                print("✅ Syntaxe vérifiée")
+                return True
+            except SyntaxError as e:
+                print(f"❌ Erreur de syntaxe: {e}")
+                # Restaurer le fichier original
+                with open(init_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                return False
+                
+        except Exception as e:
+            print(f"❌ Erreur lors de la mise à jour: {e}")
+            return False
     
     def clear_cache(self):
         """Nettoie le cache Python"""
@@ -278,7 +322,39 @@ __all__ = ['A2Module', 'RELAN', 'FlashAttention', 'CrossScaleAttention', 'MicroE
             return True
         except Exception as e:
             print(f"❌ Erreur: {e}")
-            return False
+            
+            # Essayer une méthode alternative
+            print("\n🔧 Tentative de correction alternative...")
+            try:
+                # Importer directement le fichier
+                import importlib.util
+                enhanced_path = self.ultra_path / "nn" / "modules" / "enhanced.py"
+                
+                if enhanced_path.exists():
+                    spec = importlib.util.spec_from_file_location("enhanced", enhanced_path)
+                    enhanced = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(enhanced)
+                    
+                    # Ajouter au sys.modules
+                    sys.modules['ultralytics.nn.modules.enhanced'] = enhanced
+                    
+                    # Tester
+                    A2Module = enhanced.A2Module
+                    RELAN = enhanced.RELAN
+                    
+                    a2 = A2Module(64, 64)
+                    relan = RELAN(128, 128)
+                    
+                    print("✅ Import alternatif réussi")
+                    print("⚠️  Note: L'import via __init__.py a échoué, mais le module est fonctionnel")
+                    return True
+                else:
+                    print("❌ Fichier enhanced.py non trouvé")
+                    return False
+                    
+            except Exception as e2:
+                print(f"❌ Échec de l'import alternatif: {e2}")
+                return False
     
     def run(self):
         """Exécute le processus complet de restauration"""
@@ -294,8 +370,10 @@ __all__ = ['A2Module', 'RELAN', 'FlashAttention', 'CrossScaleAttention', 'MicroE
         # 2. Restaurer les configurations
         self.restore_configs()
         
-        # 3. Mettre à jour __init__.py
-        self.update_init_file()
+        # 3. Mettre à jour __init__.py (avec gestion d'erreur améliorée)
+        init_success = self.update_init_file()
+        if not init_success:
+            print("⚠️  Mise à jour de __init__.py échouée, mais continuons...")
         
         # 4. Nettoyer le cache
         self.clear_cache()
@@ -311,13 +389,17 @@ __all__ = ['A2Module', 'RELAN', 'FlashAttention', 'CrossScaleAttention', 'MicroE
         
         if import_ok:
             print("\n🎉 RESTAURATION RÉUSSIE !")
-            print("\n📋 COMMANDES DISPONIBLES:")
-            print("• Test rapide: python test_enhanced.py")
-            print("• Entraînement: python scripts/train_enhanced.py --epochs 100")
-            print("• Notebook: jupyter notebook train_yolov12_enhanced.ipynb")
+            print("\n📋 Le modèle Enhanced est prêt à être utilisé")
+            print("⚠️  Si l'import via __init__.py échoue, utilisez l'import direct:")
+            print("    import sys")
+            print("    sys.path.append('ultralytics/nn/modules')")
+            print("    from enhanced import A2Module, RELAN")
         else:
             print("\n❌ Problème d'import persistant")
-            print("💡 Essayez: python fix_enhanced_import.py")
+            print("💡 Solution manuelle:")
+            print("1. Vérifiez que ultralytics est installé: pip install ultralytics")
+            print("2. Copiez manuellement enhanced.py dans ultralytics/nn/modules/")
+            print("3. Utilisez l'import direct comme indiqué ci-dessus")
         
         return import_ok
 
