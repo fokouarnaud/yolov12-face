@@ -66,6 +66,13 @@ from ultralytics.nn.modules import (
     v10Detect,
     A2C2f,
 )
+# Import des modules Enhanced
+from ultralytics.nn.modules.enhanced import A2Module, RELAN
+
+# Ajout des modules Enhanced aux globals pour le parsing YAML
+globals()['A2Module'] = A2Module
+globals()['RELAN'] = RELAN
+
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
 from ultralytics.utils.loss import (
@@ -997,6 +1004,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             SCDown,
             C2fCIB,
             A2C2f,
+            A2Module,
+            RELAN,
         }:
             c1, c2 = ch[f], args[0]
             if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
@@ -1024,6 +1033,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 C2fCIB,
                 C2PSA,
                 A2C2f,
+                A2Module,
+                RELAN,
             }:
                 args.insert(2, n)  # number of repeats
                 n = 1
