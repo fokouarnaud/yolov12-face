@@ -1,6 +1,6 @@
 """
 Modules Enhanced simplifiés pour YOLOv12-Face
-Version stable et fonctionnelle - Corrigée pour éviter les conflits
+Version stable et fonctionnelle
 """
 
 import torch
@@ -97,18 +97,11 @@ class RELAN(nn.Module):
 FlashAttention = A2Module
 CrossScaleAttention = A2Module  
 MicroExpressionAttention = A2Module
-SpatialAttention_Enhanced = A2Module  # Renommé pour éviter conflit
-C2PSA_Enhanced = RELAN  # Renommé pour éviter conflit avec block.py
+SpatialAttention = A2Module
+C2PSA = RELAN
 AdaptiveDetect = None  # Utiliser Detect standard
 
 
-# Export des modules - liste explicite pour éviter tout conflit
-__all__ = [
-    'A2Module', 
-    'RELAN', 
-    'FlashAttention', 
-    'CrossScaleAttention', 
-    'MicroExpressionAttention', 
-    'SpatialAttention_Enhanced', 
-    'C2PSA_Enhanced'
-]
+# Export des modules
+__all__ = ['A2Module', 'RELAN', 'FlashAttention', 'CrossScaleAttention', 
+           'MicroExpressionAttention', 'SpatialAttention', 'C2PSA']
