@@ -76,7 +76,7 @@ from .conv import (
     SpatialAttention,
 )
 from .head import OBB, Classify, Detect, Pose, RTDETRDecoder, Segment, WorldDetect, v10Detect
-from .enhanced import *
+from .enhanced import A2Module, RELAN  # Import explicite pour éviter les conflits
 from .transformer import (
     AIFI,
     MLP,
@@ -163,9 +163,7 @@ __all__ = (
     "TorchVision",
     "Index",
     "A2C2f",
+    # Modules Enhanced - Sans conflits
     "A2Module",
     "RELAN",
-    "FlashAttention",
-    "CrossScaleAttention",
-    "MicroExpressionAttention"
 )

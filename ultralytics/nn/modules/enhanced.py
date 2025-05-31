@@ -1,6 +1,6 @@
 """
-Modules Enhanced simplifiés pour YOLOv12-Face
-Version stable et fonctionnelle - Corrigée pour éviter les conflits
+Modules Enhanced pour YOLOv12-Face
+Version corrigée sans conflits avec les modules Ultralytics existants
 """
 
 import torch
@@ -10,7 +10,7 @@ import math
 
 
 class A2Module(nn.Module):
-    """Area Attention Module simplifié"""
+    """Area Attention Module pour la détection de visages"""
     
     def __init__(self, in_channels, out_channels, reduction=16):
         super(A2Module, self).__init__()
@@ -54,7 +54,7 @@ class A2Module(nn.Module):
 
 
 class RELAN(nn.Module):
-    """Residual Efficient Layer Aggregation Network simplifié"""
+    """Residual Efficient Layer Aggregation Network pour l'agrégation multi-échelle"""
     
     def __init__(self, in_channels, out_channels):
         super(RELAN, self).__init__()
@@ -93,22 +93,5 @@ class RELAN(nn.Module):
         return self.relu(fused + residual)
 
 
-# Alias pour compatibilité avec les anciens configs
-FlashAttention = A2Module
-CrossScaleAttention = A2Module  
-MicroExpressionAttention = A2Module
-SpatialAttention_Enhanced = A2Module  # Renommé pour éviter conflit
-C2PSA_Enhanced = RELAN  # Renommé pour éviter conflit avec block.py
-AdaptiveDetect = None  # Utiliser Detect standard
-
-
-# Export des modules - liste explicite pour éviter tout conflit
-__all__ = [
-    'A2Module', 
-    'RELAN', 
-    'FlashAttention', 
-    'CrossScaleAttention', 
-    'MicroExpressionAttention', 
-    'SpatialAttention_Enhanced', 
-    'C2PSA_Enhanced'
-]
+# Export seulement les modules principaux - SANS ALIAS pour éviter les conflits
+__all__ = ['A2Module', 'RELAN']

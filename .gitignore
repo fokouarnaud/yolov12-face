@@ -1,219 +1,71 @@
-# Byte-compiled / optimized / DLL files
+# YOLOv12-Face Enhanced - .gitignore
+# Fork d'Ultralytics avec modules Enhanced
+
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
+# Environnements
 .env
 .venv
 env/
 venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# YOLOv12 specific
-runs/
-*.pt
-*.onnx
-*.tflite
-*.pb
-*.engine
-*.mlmodel
-*.torchscript
-
-# Datasets
-datasets/
-data/
-*.zip
-*.tar
-*.tar.gz
-
-# Exception: Garder nos configs de sauvegarde
-!scripts/configs/
-!scripts/configs/**
-!scripts/configs/datasets/
-!scripts/configs/datasets/**
-!scripts/configs/models/
-!scripts/configs/models/**
-!scripts/configs/modules/
-!scripts/configs/modules/**
-
-# WIDERFace specific
-WIDER_train/
-WIDER_val/
-WIDER_test/
-wider_face_split/
-widerface/
-
-# macOS
-.DS_Store
-
-# Windows
-Thumbs.db
-ehthumbs.db
 
 # IDE
 .idea/
 .vscode/
 *.swp
-*.swo
-*~
 
-# Logs
-*.log
-logs/
+# Jupyter
+.ipynb_checkpoints
 
-# Temporary files
-*.tmp
-*.temp
-*.bak
-
-# Model weights (except examples)
-*.weights
-*.h5
+# Résultats d'entraînement
+runs/
+*.pt
 *.pth
-!examples/**/*.pt
-!examples/**/*.pth
+*.onnx
+*.engine
 
-# Large files
+# Gros datasets (garder les configs)
+datasets/WIDER*/
+datasets/widerface/images/
+datasets/widerface/labels/
+datasets/coco*/
+!datasets/*.yaml
+!ultralytics/cfg/datasets/
+
+# Fichiers média lourds (garder assets)
 *.mp4
 *.avi
 *.mov
-*.mkv
-*.flv
-*.wmv
-*.mpg
-*.mpeg
+datasets/**/*.jpg
+datasets/**/*.png
+!ultralytics/assets/*.jpg
+!ultralytics/assets/*.png
 
-# Images (keep only examples)
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
-*.tiff
-*.tif
-!examples/**/*.jpg
-!examples/**/*.jpeg
-!examples/**/*.png
-!assets/**/*.jpg
-!assets/**/*.jpeg
-!assets/**/*.png
+# Logs et temporaires
+*.log
+logs/
+*.tmp
+*.bak
 
-# Outputs
-output/
-outputs/
-predictions/
+# Archives
+*.zip
+*.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Résultats
 results/
-!examples/**/results/
+output/
+test_results/
+
+# FORCER l'inclusion des fichiers critiques
+!ultralytics/nn/modules/enhanced.py
+!ultralytics/cfg/models/v12/yolov12-face*.yaml
+!requirements.txt
+!train_yolov12_enhanced_fixed.ipynb

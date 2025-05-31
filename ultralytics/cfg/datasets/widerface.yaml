@@ -1,0 +1,55 @@
+# WIDERFace dataset configuration for YOLOv12
+# Face detection dataset with ~32k images
+
+# Dataset paths (relative to YOLO directory or absolute)
+path: ../datasets/widerface  # dataset root dir
+train: images/train  # train images (relative to 'path')
+val: images/val      # val images (relative to 'path')
+test: images/test    # test images (optional)
+
+# Classes
+names:
+  0: face
+
+# Dataset information
+dataset_info:
+  description: |
+    WIDERFace: A face detection benchmark dataset.
+    WIDERFace dataset is organized based on 61 event classes. For each event class,
+    it contains at least 40 images. The images are selected from publicly available
+    WIDER dataset. WIDER FACE dataset is a face detection benchmark dataset, of which
+    images are selected from the publicly available WIDER dataset. We choose 32,203 images
+    and label 393,703 faces with a high degree of variability in scale, pose and occlusion.
+  url: http://shuoyang1213.me/WIDERFACE/
+  version: '1.0'
+  year: 2016
+  contributor: WIDER FACE team
+  date_created: '2016-01-01'
+  citation: |
+    @inproceedings{yang2016wider,
+      title={Wider face: A face detection benchmark},
+      author={Yang, Shuo and Luo, Ping and Loy, Chen-Change and Tang, Xiaoou},
+      booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition},
+      pages={5525--5533},
+      year={2016}
+    }
+
+# Download script
+download: |
+  import os
+  from pathlib import Path
+  
+  # Check if dataset already exists
+  dataset_path = Path(path)
+  if (dataset_path / 'images' / 'train').exists() and (dataset_path / 'data.yaml').exists():
+      print('✅ WIDERFace dataset already exists')
+      return
+  
+  # Run the preparation script
+  script_path = Path(__file__).parent.parent.parent.parent / 'scripts' / 'prepare_widerface.py'
+  if script_path.exists():
+      print('🚀 Preparing WIDERFace dataset...')
+      os.system(f'python {script_path} --output {path}')
+  else:
+      print('❌ prepare_widerface.py script not found')
+      print('💡 Please run: python scripts/prepare_widerface.py')
