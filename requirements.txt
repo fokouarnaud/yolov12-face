@@ -1,19 +1,48 @@
-torch==2.2.2 
-torchvision==0.17.2
-flash_attn-2.7.3+cu11torch2.2cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
-timm==1.0.14
-albumentations==2.0.4
-onnx==1.14.0
-onnxruntime==1.15.1
-pycocotools==2.0.7
-PyYAML==6.0.1
-scipy==1.13.0
-onnxslim==0.1.31
-onnxruntime-gpu==1.18.0
-gradio==4.44.1
-opencv-python==4.9.0.80
-psutil==5.9.8
-py-cpuinfo==9.0.0
-huggingface-hub==0.23.2
-safetensors==0.4.3
-numpy==1.26.4
+# Requirements pour YOLOv12-Face Enhanced
+# IMPORTANT: Ne pas installer 'ultralytics' car nous utilisons un fork local
+
+# PyTorch et vision
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Traitement d'images et données
+opencv-python>=4.6.0
+pillow>=9.1.0
+numpy>=1.23.0
+
+# Configuration et sérialisation
+pyyaml>=5.3.1
+
+# Utilitaires et interface
+tqdm>=4.64.0
+matplotlib>=3.3.0
+seaborn>=0.11.0
+pandas>=1.1.4
+
+# Calculs scientifiques
+scipy>=1.4.1
+
+# Métriques et évaluation
+pycocotools>=2.0.0
+
+# Export et optimisation
+onnx>=1.14.0
+onnxruntime>=1.15.0
+
+# Interface et démo
+gradio>=4.0.0
+
+# Monitoring système
+psutil>=5.9.0
+py-cpuinfo>=9.0.0
+
+# Hugging Face pour modèles pré-entraînés
+huggingface-hub>=0.23.0
+safetensors>=0.4.0
+
+# Augmentation de données
+albumentations>=1.0.0
+
+# NOTE: PAS D'INSTALLATION D'ULTRALYTICS 
+# - Nous utilisons le fork local dans ./ultralytics/
+# - Ajouter le répertoire au PYTHONPATH au lieu d'installer via pip
