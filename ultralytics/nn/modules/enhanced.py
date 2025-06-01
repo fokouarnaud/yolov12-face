@@ -12,7 +12,14 @@ import math
 class A2Module(nn.Module):
     """Area Attention Module pour la détection de visages"""
     
-    def __init__(self, in_channels, out_channels, reduction=16):
+    def __init__(self, in_channels, out_channels, n=1, reduction=16, *args, **kwargs):
+        """Initialize A2Module
+        Args:
+            in_channels: Number of input channels
+            out_channels: Number of output channels
+            n: Not used, for compatibility with YOLO parser
+            reduction: Channel reduction factor for attention
+        """
         super(A2Module, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -56,7 +63,13 @@ class A2Module(nn.Module):
 class RELAN(nn.Module):
     """Residual Efficient Layer Aggregation Network pour l'agrégation multi-échelle"""
     
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, n=1, *args, **kwargs):
+        """Initialize RELAN
+        Args:
+            in_channels: Number of input channels
+            out_channels: Number of output channels
+            n: Not used, for compatibility with YOLO parser
+        """
         super(RELAN, self).__init__()
         
         # Multi-scale convolutions

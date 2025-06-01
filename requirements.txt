@@ -44,7 +44,8 @@ safetensors>=0.4.0
 albumentations>=1.0.0
 
 # Timm pour les modules avancés (requis par block.py)
-timm>=0.9.0
+# Version fixe pour éviter le warning de deprecation
+timm>=0.9.0,<=1.0.10
 
 # NOTE: PAS D'INSTALLATION D'ULTRALYTICS 
 # - Nous utilisons le fork local dans ./ultralytics/
