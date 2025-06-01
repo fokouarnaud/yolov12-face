@@ -27,10 +27,14 @@ class A2Module(nn.Module):
         # Channel attention
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.max_pool = nn.AdaptiveMaxPool2d(1)
+        
+        # Ensure we have at least 1 channel after reduction
+        mid_channels = max(1, in_channels // reduction)
+        
         self.fc = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels // reduction, 1, bias=False),
+            nn.Conv2d(in_channels, mid_channels, 1, bias=False),
             nn.ReLU(),
-            nn.Conv2d(in_channels // reduction, in_channels, 1, bias=False)
+            nn.Conv2d(mid_channels, in_channels, 1, bias=False)
         )
         
         # Spatial attention
@@ -73,13 +77,18 @@ class RELAN(nn.Module):
         super(RELAN, self).__init__()
         
         # Multi-scale convolutions
-        self.conv1x1 = nn.Conv2d(in_channels, out_channels // 4, 1)
-        self.conv3x3 = nn.Conv2d(in_channels, out_channels // 4, 3, padding=1)
-        self.conv5x5 = nn.Conv2d(in_channels, out_channels // 4, 5, padding=2)
-        self.conv7x7 = nn.Conv2d(in_channels, out_channels // 4, 7, padding=3)
+        # Ensure we have at least 1 channel for each branch
+        branch_channels = max(1, out_channels // 4)
+        
+        self.conv1x1 = nn.Conv2d(in_channels, branch_channels, 1)
+        self.conv3x3 = nn.Conv2d(in_channels, branch_channels, 3, padding=1)
+        self.conv5x5 = nn.Conv2d(in_channels, branch_channels, 5, padding=2)
+        self.conv7x7 = nn.Conv2d(in_channels, branch_channels, 7, padding=3)
         
         # Feature fusion
-        self.fusion = nn.Conv2d(out_channels, out_channels, 1)
+        # Total channels after concatenation = branch_channels * 4
+        total_channels = branch_channels * 4
+        self.fusion = nn.Conv2d(total_channels, out_channels, 1)
         
         # Residual connection
         if in_channels != out_channels:
