@@ -1,0 +1,69 @@
+# YOLOv13-Face Configuration
+# Next-Generation Face Detection with Efficient Transformers and NAS
+
+# Parameters
+nc: 1  # number of classes (face)
+scales: # model compound scaling constants
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024]  # YOLOv13n-face
+  s: [0.33, 0.50, 1024]  # YOLOv13s-face
+  m: [0.67, 0.75, 768]   # YOLOv13m-face
+  l: [1.00, 1.00, 512]   # YOLOv13l-face
+  x: [1.33, 1.25, 512]   # YOLOv13x-face
+
+# YOLOv13-Face Backbone with Efficient Transformers
+backbone:
+  # [from, repeats, module, args]
+  # Stem with early attention
+  - [-1, 1, Conv, [64, 4, 4]]  # 0-P1/4
+  - [-1, 1, TripletFaceAttention, [64, 4, 7]]  # 1 - Early face attention
+  
+  # Stage 1 - P2/8
+  - [-1, 1, Conv, [128, 3, 2]]  # 2
+  - [-1, 1, NeuralArchitectureSearchBlock, [128, 128]]  # 3 - NAS block
+  - [-1, 1, NeuralArchitectureSearchBlock, [128, 128]]  # 4
+  
+  # Stage 2 - P3/16 with Face Priors
+  - [-1, 1, Conv, [256, 3, 2]]  # 5
+  - [-1, 1, EfficientFaceTransformer, [256, 8, 7]]  # 6 - Face transformer
+  - [-1, 1, NeuralArchitectureSearchBlock, [256, 256]]  # 7
+  
+  # Stage 3 - P4/32 with MoE
+  - [-1, 1, Conv, [512, 3, 2]]  # 8
+  - [-1, 3, EfficientFaceTransformer, [512, 8, 7]]  # 9 - Multiple transformers
+  - [-1, 1, MixtureOfExpertsBlock, [512, 512]]  # 10 - Multi-scale experts
+  
+  # Stage 4 - P5/64 
+  - [-1, 1, Conv, [1024, 3, 2]]  # 11
+  - [-1, 1, EfficientFaceTransformer, [1024, 8, 7]]  # 12
+  - [-1, 1, SPPF, [1024, 5]]  # 13 - Spatial Pyramid Pooling
+
+# YOLOv13-Face Head with Geometric Consistency
+head:
+  # Feature Pyramid Network with Transformers
+  - [-1, 1, Conv, [512, 1, 1]]  # 14
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 15
+  - [[-1, 10], 1, Concat, [1]]  # 16 - cat backbone P4
+  - [-1, 1, C2fTransformer, [512, 512, 1]]  # 17 - C2f with transformer
+  
+  - [-1, 1, Conv, [256, 1, 1]]  # 18
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 19
+  - [[-1, 7], 1, Concat, [1]]  # 20 - cat backbone P3
+  - [-1, 1, C2fTransformer, [256, 256, 1]]  # 21 (P3/8-small)
+  
+  # Face-specific feature refinement
+  - [-1, 1, FaceFeatureRefinement, [256, 256]]  # 22
+  
+  - [-1, 1, Conv, [256, 3, 2]]  # 23
+  - [[-1, 18], 1, Concat, [1]]  # 24 - cat head P4
+  - [-1, 1, C2fTransformer, [512, 512, 1]]  # 25 (P4/16-medium)
+  
+  # Geometric consistency module
+  - [-1, 1, GeometricConsistency, [512, 5]]  # 26 - 5 landmarks
+  
+  - [-1, 1, Conv, [512, 3, 2]]  # 27
+  - [[-1, 14], 1, Concat, [1]]  # 28 - cat head P5
+  - [-1, 1, C2fTransformer, [1024, 1024, 1]]  # 29 (P5/32-large)
+  
+  # Detection head with face priors
+  - [[22, 26, 29], 1, FaceDetect, [nc, 5]]  # Detect(P3, P4, P5) with 5 landmarks
