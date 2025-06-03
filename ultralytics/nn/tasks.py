@@ -99,43 +99,39 @@ from ultralytics.utils.torch_utils import (
 try:
     from ultralytics.nn.modules.yolov13_face import (
         TripletFaceAttention,
-        EfficientFaceTransformer,  # Nom correct
-        MobileOneBlock,
-        NASBlock,
-        AdaptiveMoE,
-        CrossScaleFeatureFusion,
-        DynamicHead,
-        GeometricFaceHead
+        EfficientFaceTransformer,
+        NeuralArchitectureSearchBlock,
+        YOLOv13FaceBackbone,
+        FaceTokenMixer,
+        AdaptiveLayerNorm,
+        EfficientMLP
     )
     from ultralytics.nn.modules.yolov13_modules import (
-        EfficientAttention,
-        MixedDepthwiseConv,
-        ChannelShuffle,
-        SEBlock,
-        SpatialPyramidPooling,
-        CoordConv,
-        DynamicConv,
-        AdaptiveFeatureFusion
+        C2fTransformer,
+        FaceFeatureRefinement,
+        GeometricConsistency,
+        MixtureOfExpertsBlock,
+        FaceDetect
     )
     
     # Ajout des modules YOLOv13 aux globals pour le parsing YAML
     globals()['TripletFaceAttention'] = TripletFaceAttention
     globals()['EfficientViT'] = EfficientFaceTransformer  # Alias pour le YAML
     globals()['EfficientFaceTransformer'] = EfficientFaceTransformer
-    globals()['MobileOneBlock'] = MobileOneBlock
-    globals()['NASBlock'] = NASBlock
-    globals()['AdaptiveMoE'] = AdaptiveMoE
-    globals()['CrossScaleFeatureFusion'] = CrossScaleFeatureFusion
-    globals()['DynamicHead'] = DynamicHead
-    globals()['GeometricFaceHead'] = GeometricFaceHead
-    globals()['EfficientAttention'] = EfficientAttention
-    globals()['MixedDepthwiseConv'] = MixedDepthwiseConv
-    globals()['ChannelShuffle'] = ChannelShuffle
-    globals()['SEBlock'] = SEBlock
-    globals()['SpatialPyramidPooling'] = SpatialPyramidPooling
-    globals()['CoordConv'] = CoordConv
-    globals()['DynamicConv'] = DynamicConv
-    globals()['AdaptiveFeatureFusion'] = AdaptiveFeatureFusion
+    globals()['NASBlock'] = NeuralArchitectureSearchBlock  # Alias
+    globals()['NeuralArchitectureSearchBlock'] = NeuralArchitectureSearchBlock
+    globals()['AdaptiveMoE'] = MixtureOfExpertsBlock  # Alias
+    globals()['MixtureOfExpertsBlock'] = MixtureOfExpertsBlock
+    globals()['CrossScaleFeatureFusion'] = C2fTransformer  # Utilisé comme fusion
+    globals()['C2fTransformer'] = C2fTransformer
+    globals()['GeometricFaceHead'] = FaceDetect  # Head de détection
+    globals()['FaceDetect'] = FaceDetect
+    globals()['FaceFeatureRefinement'] = FaceFeatureRefinement
+    globals()['GeometricConsistency'] = GeometricConsistency
+    globals()['FaceTokenMixer'] = FaceTokenMixer
+    globals()['AdaptiveLayerNorm'] = AdaptiveLayerNorm
+    globals()['EfficientMLP'] = EfficientMLP
+    globals()['YOLOv13FaceBackbone'] = YOLOv13FaceBackbone
 except ImportError as e:
     LOGGER.warning(f"WARNING ⚠️ YOLOv13 modules not found: {e}")
 
