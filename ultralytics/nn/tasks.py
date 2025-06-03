@@ -69,49 +69,6 @@ from ultralytics.nn.modules import (
 # Import des modules Enhanced
 from ultralytics.nn.modules.enhanced import A2Module, RELAN
 
-# Import des modules YOLOv13
-try:
-    from ultralytics.nn.modules.yolov13_face import (
-        TripletFaceAttention,
-        EfficientViT,
-        MobileOneBlock,
-        NASBlock,
-        AdaptiveMoE,
-        CrossScaleFeatureFusion,
-        DynamicHead,
-        GeometricFaceHead
-    )
-    from ultralytics.nn.modules.yolov13_modules import (
-        EfficientAttention,
-        MixedDepthwiseConv,
-        ChannelShuffle,
-        SEBlock,
-        SpatialPyramidPooling,
-        CoordConv,
-        DynamicConv,
-        AdaptiveFeatureFusion
-    )
-    
-    # Ajout des modules YOLOv13 aux globals pour le parsing YAML
-    globals()['TripletFaceAttention'] = TripletFaceAttention
-    globals()['EfficientViT'] = EfficientViT
-    globals()['MobileOneBlock'] = MobileOneBlock
-    globals()['NASBlock'] = NASBlock
-    globals()['AdaptiveMoE'] = AdaptiveMoE
-    globals()['CrossScaleFeatureFusion'] = CrossScaleFeatureFusion
-    globals()['DynamicHead'] = DynamicHead
-    globals()['GeometricFaceHead'] = GeometricFaceHead
-    globals()['EfficientAttention'] = EfficientAttention
-    globals()['MixedDepthwiseConv'] = MixedDepthwiseConv
-    globals()['ChannelShuffle'] = ChannelShuffle
-    globals()['SEBlock'] = SEBlock
-    globals()['SpatialPyramidPooling'] = SpatialPyramidPooling
-    globals()['CoordConv'] = CoordConv
-    globals()['DynamicConv'] = DynamicConv
-    globals()['AdaptiveFeatureFusion'] = AdaptiveFeatureFusion
-except ImportError as e:
-    LOGGER.warning(f"WARNING ⚠️ YOLOv13 modules not found: {e}")
-
 # Ajout des modules Enhanced aux globals pour le parsing YAML
 globals()['A2Module'] = A2Module
 globals()['RELAN'] = RELAN
@@ -137,6 +94,50 @@ from ultralytics.utils.torch_utils import (
     scale_img,
     time_sync,
 )
+
+# Import des modules YOLOv13 après LOGGER
+try:
+    from ultralytics.nn.modules.yolov13_face import (
+        TripletFaceAttention,
+        EfficientFaceTransformer,  # Nom correct
+        MobileOneBlock,
+        NASBlock,
+        AdaptiveMoE,
+        CrossScaleFeatureFusion,
+        DynamicHead,
+        GeometricFaceHead
+    )
+    from ultralytics.nn.modules.yolov13_modules import (
+        EfficientAttention,
+        MixedDepthwiseConv,
+        ChannelShuffle,
+        SEBlock,
+        SpatialPyramidPooling,
+        CoordConv,
+        DynamicConv,
+        AdaptiveFeatureFusion
+    )
+    
+    # Ajout des modules YOLOv13 aux globals pour le parsing YAML
+    globals()['TripletFaceAttention'] = TripletFaceAttention
+    globals()['EfficientViT'] = EfficientFaceTransformer  # Alias pour le YAML
+    globals()['EfficientFaceTransformer'] = EfficientFaceTransformer
+    globals()['MobileOneBlock'] = MobileOneBlock
+    globals()['NASBlock'] = NASBlock
+    globals()['AdaptiveMoE'] = AdaptiveMoE
+    globals()['CrossScaleFeatureFusion'] = CrossScaleFeatureFusion
+    globals()['DynamicHead'] = DynamicHead
+    globals()['GeometricFaceHead'] = GeometricFaceHead
+    globals()['EfficientAttention'] = EfficientAttention
+    globals()['MixedDepthwiseConv'] = MixedDepthwiseConv
+    globals()['ChannelShuffle'] = ChannelShuffle
+    globals()['SEBlock'] = SEBlock
+    globals()['SpatialPyramidPooling'] = SpatialPyramidPooling
+    globals()['CoordConv'] = CoordConv
+    globals()['DynamicConv'] = DynamicConv
+    globals()['AdaptiveFeatureFusion'] = AdaptiveFeatureFusion
+except ImportError as e:
+    LOGGER.warning(f"WARNING ⚠️ YOLOv13 modules not found: {e}")
 
 
 class BaseModel(nn.Module):
@@ -1006,7 +1007,14 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     ch = [ch]
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     for i, (f, n, m, args) in enumerate(d["backbone"] + d["head"]):  # from, number, module, args
-        m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
+        # Get module from torch.nn or globals
+        if "nn." in m:
+            m = getattr(torch.nn, m[3:])
+        else:
+            m_name = m  # Store the original name for error message
+            m = globals().get(m)
+            if m is None:
+                raise KeyError(f"Module '{m_name}' not found. Make sure it's imported and added to globals()")
         for j, a in enumerate(args):
             if isinstance(a, str):
                 with contextlib.suppress(ValueError):
@@ -1049,20 +1057,6 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             A2C2f,
             A2Module,
             RELAN,
-            TripletFaceAttention,
-            EfficientViT,
-            MobileOneBlock,
-            NASBlock,
-            AdaptiveMoE,
-            CrossScaleFeatureFusion,
-            EfficientAttention,
-            MixedDepthwiseConv,
-            ChannelShuffle,
-            SEBlock,
-            SpatialPyramidPooling,
-            CoordConv,
-            DynamicConv,
-            AdaptiveFeatureFusion,
         }:
             c1, c2 = ch[f], args[0]
             if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
@@ -1092,32 +1086,28 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 A2C2f,
                 A2Module,
                 RELAN,
-                TripletFaceAttention,
-                EfficientViT,
-                MobileOneBlock,
-                NASBlock,
-                AdaptiveMoE,
-                CrossScaleFeatureFusion,
-                EfficientAttention,
-                MixedDepthwiseConv,
-                ChannelShuffle,
-                SEBlock,
-                SpatialPyramidPooling,
-                CoordConv,
-                DynamicConv,
-                AdaptiveFeatureFusion,
             }:
                 args.insert(2, n)  # number of repeats
                 n = 1
-            if m is C3k2:  # for M/L/X sizes
-                legacy = False
-                if scale in "mlx":
-                    args[3] = True
-            if m is A2C2f: 
-                legacy = False
-                if scale in "lx":  # for L/X sizes
-                    args.append(True)
-                    args.append(1.2)
+        elif hasattr(m, '__name__') and 'YOLOv13' in str(m.__module__):
+            # Handle YOLOv13 modules dynamically
+            c1, c2 = ch[f], args[0]
+            if c2 != nc:
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, c2, *args[1:]]
+            # Some YOLOv13 modules may need repeats
+            if m.__name__ in {'NASBlock', 'EfficientViT', 'TripletFaceAttention', 'CrossScaleFeatureFusion'}:
+                args.insert(2, n)
+                n = 1
+        elif m is C3k2:  # for M/L/X sizes
+            legacy = False
+            if scale in "mlx":
+                args[3] = True
+        elif m is A2C2f: 
+            legacy = False
+            if scale in "lx":  # for L/X sizes
+                args.append(True)
+                args.append(1.2)
         elif m is AIFI:
             args = [ch[f], *args]
         elif m in {HGStem, HGBlock}:
@@ -1132,7 +1122,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
-        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect, DynamicHead, GeometricFaceHead}:
+        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect} or \
+             (hasattr(m, '__name__') and m.__name__ in {'DynamicHead', 'GeometricFaceHead'}):
             args.append([ch[x] for x in f])
             if m is Segment:
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
