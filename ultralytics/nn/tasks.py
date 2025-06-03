@@ -69,6 +69,49 @@ from ultralytics.nn.modules import (
 # Import des modules Enhanced
 from ultralytics.nn.modules.enhanced import A2Module, RELAN
 
+# Import des modules YOLOv13
+try:
+    from ultralytics.nn.modules.yolov13_face import (
+        TripletFaceAttention,
+        EfficientViT,
+        MobileOneBlock,
+        NASBlock,
+        AdaptiveMoE,
+        CrossScaleFeatureFusion,
+        DynamicHead,
+        GeometricFaceHead
+    )
+    from ultralytics.nn.modules.yolov13_modules import (
+        EfficientAttention,
+        MixedDepthwiseConv,
+        ChannelShuffle,
+        SEBlock,
+        SpatialPyramidPooling,
+        CoordConv,
+        DynamicConv,
+        AdaptiveFeatureFusion
+    )
+    
+    # Ajout des modules YOLOv13 aux globals pour le parsing YAML
+    globals()['TripletFaceAttention'] = TripletFaceAttention
+    globals()['EfficientViT'] = EfficientViT
+    globals()['MobileOneBlock'] = MobileOneBlock
+    globals()['NASBlock'] = NASBlock
+    globals()['AdaptiveMoE'] = AdaptiveMoE
+    globals()['CrossScaleFeatureFusion'] = CrossScaleFeatureFusion
+    globals()['DynamicHead'] = DynamicHead
+    globals()['GeometricFaceHead'] = GeometricFaceHead
+    globals()['EfficientAttention'] = EfficientAttention
+    globals()['MixedDepthwiseConv'] = MixedDepthwiseConv
+    globals()['ChannelShuffle'] = ChannelShuffle
+    globals()['SEBlock'] = SEBlock
+    globals()['SpatialPyramidPooling'] = SpatialPyramidPooling
+    globals()['CoordConv'] = CoordConv
+    globals()['DynamicConv'] = DynamicConv
+    globals()['AdaptiveFeatureFusion'] = AdaptiveFeatureFusion
+except ImportError as e:
+    LOGGER.warning(f"WARNING ⚠️ YOLOv13 modules not found: {e}")
+
 # Ajout des modules Enhanced aux globals pour le parsing YAML
 globals()['A2Module'] = A2Module
 globals()['RELAN'] = RELAN
@@ -1006,6 +1049,20 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             A2C2f,
             A2Module,
             RELAN,
+            TripletFaceAttention,
+            EfficientViT,
+            MobileOneBlock,
+            NASBlock,
+            AdaptiveMoE,
+            CrossScaleFeatureFusion,
+            EfficientAttention,
+            MixedDepthwiseConv,
+            ChannelShuffle,
+            SEBlock,
+            SpatialPyramidPooling,
+            CoordConv,
+            DynamicConv,
+            AdaptiveFeatureFusion,
         }:
             c1, c2 = ch[f], args[0]
             if c2 != nc:  # if c2 not equal to number of classes (i.e. for Classify() output)
@@ -1035,6 +1092,20 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 A2C2f,
                 A2Module,
                 RELAN,
+                TripletFaceAttention,
+                EfficientViT,
+                MobileOneBlock,
+                NASBlock,
+                AdaptiveMoE,
+                CrossScaleFeatureFusion,
+                EfficientAttention,
+                MixedDepthwiseConv,
+                ChannelShuffle,
+                SEBlock,
+                SpatialPyramidPooling,
+                CoordConv,
+                DynamicConv,
+                AdaptiveFeatureFusion,
             }:
                 args.insert(2, n)  # number of repeats
                 n = 1
@@ -1061,7 +1132,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
-        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect}:
+        elif m in {Detect, WorldDetect, Segment, Pose, OBB, ImagePoolingAttn, v10Detect, DynamicHead, GeometricFaceHead}:
             args.append([ch[x] for x in f])
             if m is Segment:
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)

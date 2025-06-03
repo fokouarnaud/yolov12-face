@@ -1,9 +1,9 @@
-# YOLOv13-Face Configuration
+# YOLOv13n-Face Configuration
 # Next-Generation Face Detection with Vision Transformers and NAS
 
 # Parameters
 nc: 1  # number of classes (face)
-scales: # model compound scaling constants
+scales: # model compound scaling constants, i.e. 'model=yolov13n.yaml' will call yolov13.yaml with scale 'n'
   # [depth, width, max_channels]
   n: [0.33, 0.25, 1024]  # YOLOv13n-face
   s: [0.33, 0.50, 1024]  # YOLOv13s-face
