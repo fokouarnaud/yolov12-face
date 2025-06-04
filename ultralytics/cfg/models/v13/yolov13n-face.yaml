@@ -17,22 +17,22 @@ backbone:
   # Stem with early attention
   - [-1, 1, Conv, [64, 6, 2, 2]]  # 0-P1/2
   - [-1, 1, Conv, [128, 3, 2]]  # 1-P2/4
-  - [-1, 1, TripletFaceAttention, [128, 4]]  # 2 - Early face attention
+  - [-1, 1, TripletFaceAttention, [128, 4, 7]]  # 2 - Early face attention, window_size=7
   
   # Stage 1 - P3/8
   - [-1, 1, Conv, [256, 3, 2]]  # 3
-  - [-1, 1, NASBlock, [256]]  # 4 - NAS block
-  - [-1, 3, NASBlock, [256]]  # 5
+  - [-1, 1, NASBlock, [256, 256]]  # 4 - NAS block (in_channels, out_channels)
+  - [-1, 3, NASBlock, [256, 256]]  # 5
   
   # Stage 2 - P4/16 with ViT
   - [-1, 1, Conv, [512, 3, 2]]  # 6
-  - [-1, 1, EfficientViT, [512, 8]]  # 7 - Vision Transformer
-  - [-1, 3, EfficientViT, [512, 8]]  # 8
+  - [-1, 1, EfficientViT, [512, 8, 7]]  # 7 - Vision Transformer (dim, num_heads, window_size)
+  - [-1, 3, EfficientViT, [512, 8, 7]]  # 8
   
   # Stage 3 - P5/32 with MoE
   - [-1, 1, Conv, [1024, 3, 2]]  # 9
-  - [-1, 1, EfficientViT, [1024, 16]]  # 10
-  - [-1, 1, AdaptiveMoE, [1024, 4]]  # 11 - Mixture of Experts
+  - [-1, 1, EfficientViT, [1024, 16, 7]]  # 10 (dim, num_heads, window_size)
+  - [-1, 1, AdaptiveMoE, [1024, 1024, 4]]  # 11 - Mixture of Experts (in_channels, out_channels, num_experts)
   - [-1, 1, SPPF, [1024, 5]]  # 12
 
 # YOLOv13-Face Head with Dynamic Detection
@@ -41,20 +41,20 @@ head:
   - [-1, 1, Conv, [512, 1, 1]]  # 13
   - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 14
   - [[-1, 8], 1, Concat, [1]]  # 15 - cat backbone P4
-  - [-1, 1, CrossScaleFeatureFusion, [512]]  # 16
+  - [-1, 1, CrossScaleFeatureFusion, [512, 512, 3]]  # 16 - C2fTransformer (c1, c2, n)
   
   - [-1, 1, Conv, [256, 1, 1]]  # 17
   - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 18
   - [[-1, 5], 1, Concat, [1]]  # 19 - cat backbone P3
-  - [-1, 1, CrossScaleFeatureFusion, [256]]  # 20 (P3/8-small)
+  - [-1, 1, CrossScaleFeatureFusion, [256, 256, 3]]  # 20 (P3/8-small)
   
   - [-1, 1, Conv, [256, 3, 2]]  # 21
   - [[-1, 17], 1, Concat, [1]]  # 22 - cat head P4
-  - [-1, 1, CrossScaleFeatureFusion, [512]]  # 23 (P4/16-medium)
+  - [-1, 1, CrossScaleFeatureFusion, [512, 512, 3]]  # 23 (P4/16-medium)
   
   - [-1, 1, Conv, [512, 3, 2]]  # 24
   - [[-1, 13], 1, Concat, [1]]  # 25 - cat head P5
-  - [-1, 1, CrossScaleFeatureFusion, [1024]]  # 26 (P5/32-large)
+  - [-1, 1, CrossScaleFeatureFusion, [1024, 1024, 3]]  # 26 (P5/32-large)
   
   # Detection head with geometric constraints
   - [[20, 23, 26], 1, GeometricFaceHead, [nc]]  # Detect(P3, P4, P5) with face geometry
