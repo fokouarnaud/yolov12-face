@@ -85,7 +85,13 @@ class TripletFaceAttention(nn.Module):
         self.dim = dim
         self.num_heads = num_heads
         self.window_size = window_size
-        self.scale = (dim // num_heads) ** -0.5
+        
+        # Assurer que dim est divisible par num_heads
+        assert dim % num_heads == 0, f"dim ({dim}) must be divisible by num_heads ({num_heads})"
+        head_dim = dim // num_heads
+        assert head_dim > 0, f"head dimension must be > 0, got {head_dim}"
+        
+        self.scale = head_dim ** -0.5
         
         # Projections Q, K, V avec biais adaptatifs pour les visages
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
