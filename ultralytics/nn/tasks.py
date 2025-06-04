@@ -1771,6 +1771,37 @@ def parse_model(d, ch, verbose=True):
             c2 = args[0]
             c1 = ch[f]
             args = [*args[1:]]
+        elif m is TripletFaceAttention:
+            # TripletFaceAttention needs (dim, num_heads, window_size)
+            c1 = ch[f]
+            c2 = c1  # output channels same as input
+            args = [c1, *args]  # prepend channel dimension
+        elif m is EfficientFaceTransformer:
+            # EfficientFaceTransformer needs (dim, num_heads, window_size)
+            c1 = ch[f]
+            c2 = c1  # output channels same as input
+            args = [c1, *args]  # prepend channel dimension
+        elif m is NeuralArchitectureSearchBlock:
+            # NeuralArchitectureSearchBlock needs (in_channels, out_channels)
+            c1 = ch[f]
+            c2 = args[0]  # first arg is out_channels
+            args = [c1, *args]  # prepend in_channels
+        elif m is MixtureOfExpertsBlock:
+            # MixtureOfExpertsBlock needs (in_channels, out_channels, num_experts)
+            c1 = ch[f]
+            c2 = args[0]  # first arg is out_channels
+            args = [c1, *args]  # prepend in_channels
+        elif m is C2fTransformer:
+            # C2fTransformer needs (c1, c2, n)
+            c1 = ch[f]
+            c2 = args[0]
+            # args already has [c2, n] from YAML
+            args = [c1, *args]
+        elif m is FaceDetect:
+            # FaceDetect has special handling like Detect
+            args.append([ch[x] for x in f])
+            m.legacy = legacy
+            c2 = args[0] * 5  # arbitrary output channels
         else:
             c2 = ch[f]
 
