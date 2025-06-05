@@ -1,60 +1,44 @@
-# YOLOv13n-Face Configuration
-# Next-Generation Face Detection with Vision Transformers and NAS
+# YOLOv13n-Face - Utilisant les modules existants du fork Ultralytics 8.3.148
 
-# Parameters
+# Model configuration
 nc: 1  # number of classes (face)
-scales: # model compound scaling constants, i.e. 'model=yolov13n.yaml' will call yolov13.yaml with scale 'n'
-  # [depth, width, max_channels]
-  n: [0.33, 0.25, 1024]  # YOLOv13n-face
-  s: [0.33, 0.50, 1024]  # YOLOv13s-face
-  m: [0.67, 0.75, 768]   # YOLOv13m-face
-  l: [1.00, 1.00, 512]   # YOLOv13l-face
-  x: [1.33, 1.25, 512]   # YOLOv13x-face
+scales:
+  n: [0.33, 0.25, 1024]  # model depth, width, max_channels
 
-# YOLOv13-Face Backbone with Efficient Transformers
+# YOLOv13 backbone avec modules existants
 backbone:
   # [from, repeats, module, args]
-  # Stem with early attention
-  - [-1, 1, Conv, [64, 6, 2, 2]]  # 0-P1/2
+  - [-1, 1, Conv, [64, 3, 2]]  # 0-P1/2
   - [-1, 1, Conv, [128, 3, 2]]  # 1-P2/4
-  - [-1, 1, TripletFaceAttention, [128, 4, 7]]  # 2 - Early face attention, window_size=7
-  
-  # Stage 1 - P3/8
-  - [-1, 1, Conv, [256, 3, 2]]  # 3
-  - [-1, 1, NASBlock, [256, 256]]  # 4 - NAS block (in_channels, out_channels)
-  - [-1, 3, NASBlock, [256, 256]]  # 5
-  
-  # Stage 2 - P4/16 with ViT
-  - [-1, 1, Conv, [512, 3, 2]]  # 6
-  - [-1, 1, EfficientViT, [512, 8, 7]]  # 7 - Vision Transformer (dim, num_heads, window_size)
-  - [-1, 3, EfficientViT, [512, 8, 7]]  # 8
-  
-  # Stage 3 - P5/32 with MoE
-  - [-1, 1, Conv, [1024, 3, 2]]  # 9
-  - [-1, 1, EfficientViT, [1024, 16, 7]]  # 10 (dim, num_heads, window_size)
-  - [-1, 1, AdaptiveMoE, [1024, 1024, 4]]  # 11 - Mixture of Experts (in_channels, out_channels, num_experts)
-  - [-1, 1, SPPF, [1024, 5]]  # 12
+  - [-1, 3, C2f, [128, True]]  # 2
+  - [-1, 1, Conv, [256, 3, 2]]  # 3-P3/8
+  - [-1, 6, C2f, [256, True]]  # 4
+  - [-1, 1, Conv, [512, 3, 2]]  # 5-P4/16
+  - [-1, 6, C2fPSA, [512]]  # 6 - Position Sensitive Attention
+  - [-1, 1, Conv, [1024, 3, 2]]  # 7-P5/32
+  - [-1, 3, C2fPSA, [1024]]  # 8 - Position Sensitive Attention
+  - [-1, 1, AIFI, [1024, 8, 1024]]  # 9 - Transformer avec positional embeddings
+  - [-1, 1, SPPELAN, [1024, 512, 512]]  # 10 - SPP-ELAN (similaire à RELAN)
 
-# YOLOv13-Face Head with Dynamic Detection
+# YOLOv13 head avec modules d'attention
 head:
-  # FPN with Cross-Scale Fusion
-  - [-1, 1, Conv, [512, 1, 1]]  # 13
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 11
+  - [[-1, 6], 1, Concat, [1]]  # 12 cat backbone P4
+  - [-1, 3, C2fAttn, [512, 128, 8, 512]]  # 13 - C2f avec attention
+  
   - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 14
-  - [[-1, 8], 1, Concat, [1]]  # 15 - cat backbone P4
-  - [-1, 1, CrossScaleFeatureFusion, [512, 512, 3]]  # 16 - C2fTransformer (c1, c2, n)
+  - [[-1, 4], 1, Concat, [1]]  # 15 cat backbone P3
+  - [-1, 3, C2f, [256, False]]  # 16 (P3/8-small)
+  - [-1, 1, PSA, [256, 256]]  # 17 - Position Sensitive Attention
   
-  - [-1, 1, Conv, [256, 1, 1]]  # 17
-  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 18
-  - [[-1, 5], 1, Concat, [1]]  # 19 - cat backbone P3
-  - [-1, 1, CrossScaleFeatureFusion, [256, 256, 3]]  # 20 (P3/8-small)
+  - [-1, 1, Conv, [256, 3, 2]]  # 18
+  - [[-1, 13], 1, Concat, [1]]  # 19 cat head P4
+  - [-1, 3, C2f, [512, False]]  # 20 (P4/16-medium)
+  - [-1, 1, A2C2f, [512, 512, 1, True, 4]]  # 21 - Area Attention C2f
   
-  - [-1, 1, Conv, [256, 3, 2]]  # 21
-  - [[-1, 17], 1, Concat, [1]]  # 22 - cat head P4
-  - [-1, 1, CrossScaleFeatureFusion, [512, 512, 3]]  # 23 (P4/16-medium)
+  - [-1, 1, Conv, [512, 3, 2]]  # 22
+  - [[-1, 10], 1, Concat, [1]]  # 23 cat head P5
+  - [-1, 3, C2f, [1024, False]]  # 24 (P5/32-large)
   
-  - [-1, 1, Conv, [512, 3, 2]]  # 24
-  - [[-1, 13], 1, Concat, [1]]  # 25 - cat head P5
-  - [-1, 1, CrossScaleFeatureFusion, [1024, 1024, 3]]  # 26 (P5/32-large)
-  
-  # Detection head with geometric constraints
-  - [[20, 23, 26], 1, GeometricFaceHead, [nc]]  # Detect(P3, P4, P5) with face geometry
+  # Detection head
+  - [[17, 21, 24], 1, Detect, [nc]]  # 25 Detect(P3, P4, P5)
