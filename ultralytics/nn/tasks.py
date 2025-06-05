@@ -1732,7 +1732,7 @@ def parse_model(d, ch, verbose=True):
             c2 = args[0]
             c1 = ch[f]
             args = [*args[1:]]
-                                                        else:
+        else:
             c2 = ch[f]
 
         m_ = torch.nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
