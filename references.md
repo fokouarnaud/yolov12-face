@@ -30,7 +30,22 @@ Triplet loss est largement utilisé dans l'apprentissage one-shot, conçu pour s
 #### Attention Efficace
 Poly-NL surmonte la limitation d'efficacité des blocs non-locaux en les formulant comme des cas spéciaux de fonctions polynomiales du 3ème ordre, réduisant la complexité de quadratique à linéaire sans perte de performance.
 
-### 4. YOLOv8 et Architectures Récentes
+### 4. Évolution de YOLO (v8 à v12)
+
+#### YOLOv8
+YOLOv8 est développé par Ultralytics et introduit des améliorations en termes de flexibilité et performance. Il supporte diverses tâches de vision (détection, segmentation, pose, tracking).
+
+#### YOLOv9 (Février 2024)
+YOLOv9 introduit Programmable Gradient Information (PGI) et GELAN (Generalized Efficient Layer Aggregation Network) pour résoudre le problème de perte d'information dans les réseaux profonds. Il réduit les paramètres de 49% et les calculs de 43%.
+
+#### YOLOv10 (2024)
+YOLOv10 introduit le NMS-free training avec dual label assignment, éliminant le besoin de post-processing NMS. YOLOv10-B réduit la latence de 46% par rapport à YOLOv9-C.
+
+#### YOLOv11 (2024)
+YOLOv11 améliore l'architecture backbone et neck pour une meilleure extraction de features. Il utilise 22% moins de paramètres que YOLOv8 tout en améliorant la précision.
+
+#### YOLOv12 (2025)
+YOLOv12 est la première version YOLO attention-centric, introduisant Area Attention (A²) et R-ELAN. YOLOv12-N atteint 40.6% mAP, surpassant YOLOv10-N de 2.1% et YOLOv11-N de 1.2%. Il combine la vitesse des CNN avec les bénéfices des transformers.
 
 #### YOLOv8-Face
 YOLO-FaceV2 introduit un module Receptive Field Enhancement (RFE) pour extraire des informations multi-échelles et un module Separated and Enhancement Attention Module (SEAM) pour se concentrer sur les régions occluses.
@@ -154,6 +169,14 @@ Basé sur l'état de l'art:
 7. Misra, D., et al. (2021). Rotate to Attend: Convolutional Triplet Attention Module. WACV 2021.
 
 8. Dosovitskiy, A., et al. (2021). An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale. ICLR 2021.
+
+9. Wang, C.-Y., et al. (2024). YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information. arXiv:2402.13616.
+
+10. Tsinghua University researchers (2024). YOLOv10: Real-Time End-to-End Object Detection. Using Ultralytics Python package.
+
+11. Jocher, G., & Qiu, J. (2024). Ultralytics YOLO11. Version 11.0.0. GitHub.
+
+12. Tian, Y., Ye, Q., & Doermann, D. (2025). YOLOv12: Attention-Centric Real-Time Object Detectors. arXiv:2502.12524.
 
 ## Conclusion
 
