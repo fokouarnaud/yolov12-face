@@ -92,45 +92,6 @@ from ultralytics.utils.torch_utils import (
     time_sync,
 )
 
-# Import des modules YOLOv13 après LOGGER
-try:
-    from ultralytics.nn.modules.yolov13_face import (
-        TripletFaceAttention,
-        EfficientFaceTransformer,
-        NeuralArchitectureSearchBlock,
-        YOLOv13FaceBackbone,
-        FaceTokenMixer,
-        AdaptiveLayerNorm,
-        EfficientMLP
-    )
-    from ultralytics.nn.modules.yolov13_modules import (
-        C2fTransformer,
-        FaceFeatureRefinement,
-        GeometricConsistency,
-        MixtureOfExpertsBlock,
-        FaceDetect
-    )
-    
-    # Ajout des modules YOLOv13 aux globals pour le parsing YAML
-    globals()['TripletFaceAttention'] = TripletFaceAttention
-    globals()['EfficientViT'] = EfficientFaceTransformer  # Alias pour le YAML
-    globals()['EfficientFaceTransformer'] = EfficientFaceTransformer
-    globals()['NASBlock'] = NeuralArchitectureSearchBlock  # Alias
-    globals()['NeuralArchitectureSearchBlock'] = NeuralArchitectureSearchBlock
-    globals()['AdaptiveMoE'] = MixtureOfExpertsBlock  # Alias
-    globals()['MixtureOfExpertsBlock'] = MixtureOfExpertsBlock
-    globals()['CrossScaleFeatureFusion'] = C2fTransformer  # Utilisé comme fusion
-    globals()['C2fTransformer'] = C2fTransformer
-    globals()['GeometricFaceHead'] = FaceDetect  # Head de détection
-    globals()['FaceDetect'] = FaceDetect
-    globals()['FaceFeatureRefinement'] = FaceFeatureRefinement
-    globals()['GeometricConsistency'] = GeometricConsistency
-    globals()['FaceTokenMixer'] = FaceTokenMixer
-    globals()['AdaptiveLayerNorm'] = AdaptiveLayerNorm
-    globals()['EfficientMLP'] = EfficientMLP
-    globals()['YOLOv13FaceBackbone'] = YOLOv13FaceBackbone
-except ImportError as e:
-    LOGGER.warning(f"WARNING ⚠️ YOLOv13 modules not found: {e}")
 
 class BaseModel(torch.nn.Module):
     """
@@ -1771,38 +1732,7 @@ def parse_model(d, ch, verbose=True):
             c2 = args[0]
             c1 = ch[f]
             args = [*args[1:]]
-        elif m is TripletFaceAttention:
-            # TripletFaceAttention needs (dim, num_heads, window_size)
-            c1 = ch[f]
-            c2 = c1  # output channels same as input
-            args = [c1, *args]  # prepend channel dimension
-        elif m is EfficientFaceTransformer:
-            # EfficientFaceTransformer needs (dim, num_heads, window_size)
-            c1 = ch[f]
-            c2 = c1  # output channels same as input
-            args = [c1, *args]  # prepend channel dimension
-        elif m is NeuralArchitectureSearchBlock:
-            # NeuralArchitectureSearchBlock needs (in_channels, out_channels)
-            c1 = ch[f]
-            c2 = args[0]  # first arg is out_channels
-            args = [c1, *args]  # prepend in_channels
-        elif m is MixtureOfExpertsBlock:
-            # MixtureOfExpertsBlock needs (in_channels, out_channels, num_experts)
-            c1 = ch[f]
-            c2 = args[0]  # first arg is out_channels
-            args = [c1, *args]  # prepend in_channels
-        elif m is C2fTransformer:
-            # C2fTransformer needs (c1, c2, n)
-            c1 = ch[f]
-            c2 = args[0]
-            # args already has [c2, n] from YAML
-            args = [c1, *args]
-        elif m is FaceDetect:
-            # FaceDetect has special handling like Detect
-            args.append([ch[x] for x in f])
-            m.legacy = legacy
-            c2 = args[0] * 5  # arbitrary output channels
-        else:
+                                                        else:
             c2 = ch[f]
 
         m_ = torch.nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
