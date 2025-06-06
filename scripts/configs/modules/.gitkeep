@@ -1,3 +1,0 @@
-# GitKeep pour scripts/configs/modules/
-# Ce fichier assure que le dossier est tracké par Git
-# même lorsqu'il ne contient que des fichiers exclus par .gitignore

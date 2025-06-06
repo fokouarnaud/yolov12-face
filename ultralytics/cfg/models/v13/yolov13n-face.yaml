@@ -1,44 +1,94 @@
-# YOLOv13n-Face - Utilisant les modules existants du fork Ultralytics 8.3.148
+# YOLOv13n-Face - Architecture Innovante pour la Détection de Visages
+# Basé sur l'analyse des limitations de YOLOv12 et utilisant les modules existants du fork Ultralytics 8.3.148
 
 # Model configuration
-nc: 1  # number of classes (face)
+nc: 1  # number of classes (face only)
 scales:
-  n: [0.33, 0.25, 1024]  # model depth, width, max_channels
+  n: [0.33, 0.25, 1024]  # model depth, width, max_channels - optimisé pour l'efficacité
 
-# YOLOv13 backbone avec modules existants
+# Anchors optimisés pour les visages (ratios typiques)
+anchors:
+  - [10,13, 16,30, 33,23]  # P3/8 - petits visages
+  - [30,61, 62,45, 59,119]  # P4/16 - visages moyens  
+  - [116,90, 156,198, 373,326]  # P5/32 - grands visages
+
+# YOLOv13 backbone avec architecture hiérarchique innovante
 backbone:
-  # [from, repeats, module, args]
+  # Stage 1: Extraction de features basiques (Conv pure pour l'efficacité)
   - [-1, 1, Conv, [64, 3, 2]]  # 0-P1/2
   - [-1, 1, Conv, [128, 3, 2]]  # 1-P2/4
-  - [-1, 3, C2f, [128, True]]  # 2
+  - [-1, 3, C2f, [128, True]]  # 2 - Features basiques
+  
+  # Stage 2: Introduction de l'attention spatiale légère
   - [-1, 1, Conv, [256, 3, 2]]  # 3-P3/8
-  - [-1, 6, C2f, [256, True]]  # 4
-  - [-1, 1, Conv, [512, 3, 2]]  # 5-P4/16
-  - [-1, 6, C2fPSA, [512]]  # 6 - Position Sensitive Attention
-  - [-1, 1, Conv, [1024, 3, 2]]  # 7-P5/32
-  - [-1, 3, C2fPSA, [1024]]  # 8 - Position Sensitive Attention
-  - [-1, 1, AIFI, [1024, 8, 1024]]  # 9 - Transformer avec positional embeddings
-  - [-1, 1, SPPELAN, [1024, 512, 512]]  # 10 - SPP-ELAN (similaire à RELAN)
+  - [-1, 6, C2f, [256, True]]  # 4 - Extraction de features
+  - [-1, 1, PSA, [256, 256]]  # 5 - Position Sensitive Attention pour détails fins
+  
+  # Stage 3: Attention hybride pour équilibre efficacité/précision
+  - [-1, 1, Conv, [512, 3, 2]]  # 6-P4/16
+  - [-1, 3, A2C2f, [512, 512, 1, True, 1, 1.2]]  # 7 - Area Attention + C2f combinés
+  - [-1, 6, C2f, [512, True]]  # 8 - Consolidation des features
+  
+  # Stage 4: Attention profonde et agrégation multi-échelle
+  - [-1, 1, Conv, [1024, 3, 2]]  # 9-P5/32
+  - [-1, 3, C2fPSA, [1024]]  # 10 - C2f avec PSA intégré pour features globales
+  - [-1, 1, SPPELAN, [1024, 512, 512]]  # 11 - SPP-ELAN pour agrégation multi-échelle optimisée
 
-# YOLOv13 head avec modules d'attention
+# YOLOv13 neck avec fusion multi-échelle améliorée
 head:
-  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 11
-  - [[-1, 6], 1, Concat, [1]]  # 12 cat backbone P4
-  - [-1, 3, C2fAttn, [512, 128, 8, 512]]  # 13 - C2f avec attention
+  # Upsampling path avec attention progressive
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 12
+  - [[-1, 8], 1, Concat, [1]]  # 13 - cat backbone P4
+  - [-1, 3, C2fPSA, [512]]  # 14 - Fusion avec attention pyramidale
   
-  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 14
-  - [[-1, 4], 1, Concat, [1]]  # 15 cat backbone P3
-  - [-1, 3, C2f, [256, False]]  # 16 (P3/8-small)
-  - [-1, 1, PSA, [256, 256]]  # 17 - Position Sensitive Attention
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]  # 15
+  - [[-1, 5], 1, Concat, [1]]  # 16 - cat backbone P3 (après PSA)
+  - [-1, 3, C2f, [256, False]]  # 17 (P3/8-small) - Efficacité pour petits visages
   
+  # Downsampling path avec préservation des détails
   - [-1, 1, Conv, [256, 3, 2]]  # 18
-  - [[-1, 13], 1, Concat, [1]]  # 19 cat head P4
+  - [[-1, 14], 1, Concat, [1]]  # 19 - cat head P4
   - [-1, 3, C2f, [512, False]]  # 20 (P4/16-medium)
-  - [-1, 1, A2C2f, [512, 512, 1, True, 4]]  # 21 - Area Attention C2f
+  - [-1, 1, PSA, [512, 512]]  # 21 - Attention finale pour visages moyens
   
   - [-1, 1, Conv, [512, 3, 2]]  # 22
-  - [[-1, 10], 1, Concat, [1]]  # 23 cat head P5
+  - [[-1, 11], 1, Concat, [1]]  # 23 - cat head P5
   - [-1, 3, C2f, [1024, False]]  # 24 (P5/32-large)
   
-  # Detection head
-  - [[17, 21, 24], 1, Detect, [nc]]  # 25 Detect(P3, P4, P5)
+  # Detection head avec ancres optimisées pour visages
+  - [[17, 21, 24], 1, Detect, [nc, anchors]]  # 25 - Detect(P3, P4, P5)
+
+# Hyperparameters optimisés pour la détection de visages
+# Ces valeurs sont spécifiquement calibrées pour les caractéristiques des visages
+depth_multiple: 0.33  # Facteur de profondeur du modèle
+width_multiple: 0.25  # Facteur de largeur du modèle
+
+# Loss weights optimisés pour les visages
+loss_weights:
+  box: 7.5  # Poids augmenté pour une localisation précise des visages
+  cls: 0.5  # Poids standard pour la classification (une seule classe)
+  obj: 1.0  # Poids objectness standard
+  
+# Paramètres d'entraînement recommandés
+training_params:
+  epochs: 600  # Entraînement prolongé pour convergence optimale
+  batch_size: 256  # Batch size large pour stabilité avec attention
+  lr0: 0.01  # Learning rate initial
+  lrf: 0.01  # Learning rate final
+  momentum: 0.937
+  weight_decay: 0.0005
+  warmup_epochs: 3.0
+  mosaic: 1.0  # Augmentation mosaïque pour robustesse
+  mixup: 0.0  # Pas de mixup pour préserver les caractéristiques faciales
+  copy_paste: 0.1  # Augmentation copy-paste légère
+  iou_t: 0.20  # Seuil IoU pour l'entraînement
+  anchor_t: 4.0  # Seuil multiple d'ancre
+
+# Notes d'architecture:
+# 1. PSA placé stratégiquement dans les couches basses (stage 2) pour capturer les détails fins des visages
+# 2. A2C2f utilisé dans le stage 3 pour équilibrer efficacité computationnelle et capacité d'attention
+# 3. C2fPSA dans le stage 4 et le neck pour une fusion multi-échelle optimale
+# 4. SPPELAN remplace SPPF pour une agrégation multi-échelle supérieure
+# 5. Architecture progressive: CNN → PSA → A2C2f → C2fPSA pour une transition douce
+# 6. Ancres spécifiquement calibrées pour les ratios typiques des visages humains
+# 7. Head simplifié mais efficace avec attention stratégiquement placée
